@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 // Models
 const { User } = require('../models/user.model')
 const { Product } = require('../models/product.model')
+const { Order } = require('../models/order.model')
 
 // Utils
 const { catchAsync } = require('../utils/catchAsync.util')
