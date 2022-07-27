@@ -35,9 +35,7 @@ router.use(protectToken)
 
 router.post(
     '/',
-    multerUpload.fields([{ name: 'productImg', maxCount: 10 }]),
-
-    createProduct
+    multerUpload.fields([{ name: 'productImg', maxCount: 5 }]),createProductValidations,checkValidations,createProduct
 )
 router
     .route('/:id')

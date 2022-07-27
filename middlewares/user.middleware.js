@@ -50,13 +50,6 @@ const protectToken = catchAsync(async (req, res, next) => {
     next()
 })
 
-const isAdmin = catchAsync(async (req, res, next) => {
-    if (req.sessionUser.role !== 'admin') {
-        return next(new AppError('you are not account administrator', 403))
-    }
-
-    next()
-})
 
 const protectAccountOwner = catchAsync(async (req, res, next) => {
     const { sessionUser, user } = req
@@ -71,6 +64,5 @@ const protectAccountOwner = catchAsync(async (req, res, next) => {
 module.exports = {
     userExist,
     protectToken,
-    isAdmin,
     protectAccountOwner,
 }

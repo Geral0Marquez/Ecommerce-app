@@ -14,9 +14,6 @@ const createUserValidations = [
         .withMessage('Password must be at least 8 characters long'),
 ]
 
-const createCategoryValidations = [
-    body('name').notEmpty().withMessage('Name cannot be empty'),
-]
 
 const createProductValidations = [
     body('title').isString().notEmpty().withMessage('Enter a valid title'),
@@ -53,43 +50,11 @@ const checkValidations = (req, res, next) => {
 
     next()
 }
-const checkParameters = async (req, res, next) => {
-    const { productId, quantity } = req.body
 
-    const product = await Product.findOne({
-        where: {
-            id: productId,
-            status: 'active',
-        },
-    })
 
-    if (!product) {
-        return next(new AppError('Product dont exists', 404))
-    }
-
-    if (parseInt(quantity) > product.quantity || parseInt(quantity) < 0) {
-        return next(
-            new AppError(
-                `There are only ${product.quantity} items of ${product.title}`,
-                404
-            )
-        )
-    }
-
-    next()
-}
-
-const cartValidator = [
-    body('productId').isInt().withMessage('Product Id must be a number'),
-    body('quantity').isInt().withMessage('Quantit must be an integer'),
-    checkValidations,
-    checkParameters,
-]
 module.exports = {
     createProductValidations,
     createUserValidations,
-    createCategoryValidations,
     checkValidations,
-    checkParameters,
-    cartValidator,
+
 }

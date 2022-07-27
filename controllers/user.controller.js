@@ -1,13 +1,18 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
+// Models
 const { User } = require('../models/user.model')
 const { Product } = require('../models/product.model')
+
+// Utils
 const { catchAsync } = require('../utils/catchAsync.util')
 const { AppError } = require('../utils/app.Error.util')
 const { Email } = require('../utils/email.util')
-const signUp = catchAsync(async (req, res, next) => {
-    const { userName, email, password } = req.body
+
+// POST crear usuario
+const createUser = catchAsync(async (req, res, next) => {
+    const { userName, email, password} = req.body
 
     const salt = await bcrypt.genSalt(12)
     const encryptPass = await bcrypt.hash(password, salt)
@@ -16,6 +21,7 @@ const signUp = catchAsync(async (req, res, next) => {
         userName,
         email,
         password: encryptPass,
+       
     })
 
     newUser.password = undefined
@@ -27,7 +33,9 @@ const signUp = catchAsync(async (req, res, next) => {
         newUser,
     })
 })
-const login = catchAsync(async (req, res, next) => {
+
+// POST iniciar sesión
+const userlogin = catchAsync(async (req, res, next) => {
     const { email, password } = req.body
 
     const user = await User.findOne({
@@ -56,6 +64,7 @@ const login = catchAsync(async (req, res, next) => {
         token,
     })
 })
+
 //PATCH /:id Actualizar perfil de usuario (solo username y email)
 const updateUser = catchAsync(async (req, res, next) => {
     const { user } = req
@@ -65,6 +74,7 @@ const updateUser = catchAsync(async (req, res, next) => {
 
     res.status(201).json({ status: 'success' })
 })
+
 // DELETE /:id Deshabilitar cuenta de usuario
 const desactiveUser = catchAsync(async (req, res, next) => {
     const { id } = req.params
@@ -74,6 +84,7 @@ const desactiveUser = catchAsync(async (req, res, next) => {
 
     res.status(201).json({ status: 'success' })
 })
+
 // GET /me Obtener los productos que el usuario ha creado
 const getUser = catchAsync(async (req, res, next) => {
     const { sessionUser } = req
@@ -94,12 +105,59 @@ const getUser = catchAsync(async (req, res, next) => {
         products,
     })
 })
-// obtener todos los detalles de una sola order y todas las ordenes se me hizo mas factible colocarlas en carts por la relacion con el userId .pendiente de encontrar otra solucion que encaje
+
+///orders  obtener todas las compras hechas por el usuario
+const getUserAllOrders = catchAsync(async (req, res, next) => {
+    const { sessionUser } = req;
+    const userOrders = await Order.findAll({
+      include: [
+        {
+          model: Cart,
+          required: false,
+          include: {
+            model: ProductInCart,
+            required: false,
+            include: { model: Cart, required: false },
+          },
+        },
+      ],
+      where: { userId: sessionUser.id, status: 'purchased' },
+    });
+  
+    if (!userOrders) {
+      return next(new AppError('No orders to show', 400));
+    }
+  
+    res.status(201).json({
+      status: 'success',
+      userOrders,
+    });
+  });
+
+// GET   /orders/:id obtener detalles de una sola orden dado un ID
+  const getUserOrderById = catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    const userOrders = await Order.findOne({
+      include: [],
+      where: { id, status: 'purchased' },
+    });
+  
+    if (!userOrders) {
+      return next(new AppError('No orders to show', 400));
+    }
+  
+    res.status(201).json({
+      status: 'success',
+      userOrders,
+    });
+  });
 
 module.exports = {
-    signUp,
-    login,
+    createUser,
+    userlogin,
     updateUser,
     desactiveUser,
     getUser,
+    getUserAllOrders,
+    getUserOrderById
 }

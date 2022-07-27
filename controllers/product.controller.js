@@ -1,13 +1,19 @@
-const { catchAsync } = require('../utils/catchAsync.util')
+
+// Models
 const { Product } = require('../models/product.model')
 const { Category } = require('../models/category.model')
-
 const { User } = require('../models/user.model')
 const { AppError } = require('../utils/app.Error.util')
-const { ref, uploadBytes } = require('firebase/storage')
-const { Storage } = require('../utils/firebase.util')
 const { ProductImg } = require('../models/productImage.model')
 
+//firebase
+const { ref, uploadBytes } = require('firebase/storage')
+
+// Utils
+const { catchAsync } = require('../utils/catchAsync.util')
+const { Storage } = require('../utils/firebase.util')
+
+// crear un producto
 const createProduct = catchAsync(async (req, res, next) => {
     const { sessionUser } = req
     const { title, description, price, quantity, categoryId } = req.body
@@ -38,6 +44,8 @@ const createProduct = catchAsync(async (req, res, next) => {
     res.status(201).json({ status: 'success', data: { newProduct } })
 })
 
+
+//Obtener todos los productos
 const getAllProducts = catchAsync(async (req, res, next) => {
     const products = await Product.findAll({
         required: false,
@@ -50,11 +58,15 @@ const getAllProducts = catchAsync(async (req, res, next) => {
     res.status(200).json({ products })
 })
 
+
+// obtener producto por su id
 const getProductById = catchAsync(async (req, res, next) => {
     const { product } = req
     res.status(200).json({ product })
 })
 
+
+//actualizar producto
 const updateProduct = catchAsync(async (req, res, next) => {
     const { product } = req
     const { title, description, price, quantity } = req.body
@@ -67,6 +79,8 @@ const updateProduct = catchAsync(async (req, res, next) => {
     res.status(200).json({ status: 'success', updateProd })
 })
 
+
+// deshabilitar producto
 const deleteProduct = catchAsync(async (req, res, next) => {
     const { product } = req
     await product.update({ status: 'deleted' })
@@ -76,6 +90,9 @@ const deleteProduct = catchAsync(async (req, res, next) => {
     })
 })
 
+
+
+// obtener todas las categorias
 const getAllCategories = catchAsync(async (req, res, next) => {
     const categories = await Category.findAll({
         required: false,
@@ -84,6 +101,9 @@ const getAllCategories = catchAsync(async (req, res, next) => {
     res.status(200).json({ categories })
 })
 
+
+
+// crear una nueva categoria
 const createNewCategory = catchAsync(async (req, res, next) => {
     const { name } = req.body
 
@@ -97,6 +117,8 @@ const createNewCategory = catchAsync(async (req, res, next) => {
     res.status(201).json({ status: 'success', newCategory })
 })
 
+
+// actualizar nombre de la categoria
 const updateCategory = catchAsync(async (req, res, next) => {
     const { id } = req.params
     const { name } = req.body

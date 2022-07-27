@@ -1,48 +1,21 @@
+
+//Models
 const { Cart } = require('../models/cart.model')
 const { ProductInCart } = require('../models/productInCart.model')
 const { Product } = require('../models/product.model')
 const { Order } = require('../models/order.model')
+
+// Utils
 const { AppError } = require('../utils/app.Error.util')
 const { catchAsync } = require('../utils/catchAsync.util')
-const { User } = require('../models/user.model')
-const { Email } = require('../utils/email.util')
+const { Email } = require('../utils/email.util') //pendiente
 
-const getCart = catchAsync(async (req, res, next) => {
-    const { sessionUser } = req
 
-    const cart = await Cart.findOne({
-        required: false,
-        where: { userId: sessionUser.id, status: 'purchased' },
-        include: [
-            {
-                model: ProductInCart,
-                include: [{ model: Product }],
-            },
-        ],
-    })
-
-    res.status(200).json({ status: 'success', cart })
-})
-
-const getAllCart = catchAsync(async (req, res, next) => {
-    const cart = await Cart.findAll({
-        required: false,
-        where: { status: 'purchased' },
-        include: [
-            {
-                model: ProductInCart,
-                include: [{ model: Product }],
-            },
-        ],
-    })
-
-    res.status(200).json({ status: 'success', cart })
-})
-
-const addProduct = catchAsync(async (req, res, next) => {
+// /add-product  Agregar un producto al carrito del usuario (enviar productId y quantity por req.body)
+const addProductCart = catchAsync(async (req, res, next) => {
     const { productId, quantity } = req.body
     const { sessionUser } = req
-    const product = await Product.findOne({ where: { id: productId } })
+    const product = await Product.findOne({ where: { id: productId, status: 'active' } })
 
     if (!product) {
         return next(new AppError('Invalid product', 404))
@@ -55,6 +28,7 @@ const addProduct = catchAsync(async (req, res, next) => {
         )
     }
 
+
     const cart = await Cart.findOne({
         where: { userId: sessionUser.id, status: 'active' },
     })
@@ -64,21 +38,27 @@ const addProduct = catchAsync(async (req, res, next) => {
 
         await ProductInCart.create({ cartId: newCart.id, productId, quantity })
     } else {
-        const findProduct = await ProductInCart.findOne({
+        const productExists = await ProductInCart.findOne({
             required: false,
             where: { cartId: cart.id, productId, status: 'active' },
         })
 
-        const newProductAdd = await ProductInCart.create({
-            cartId: cart.id,
-            productId,
-            quantity,
-        })
-    }
+        if (productExists) {
+            return next(new AppError('Product is already in the cart', 400));
+          }
+      
+          await ProductInCart.create(
+              { cartId: cart.id,
+                 productId, 
+                 quantity });
+        }
+   
     res.status(201).json({ status: 'success', cart })
 })
+
+// /update-cart  actualizar producto del carrito
 //al actualizar a pursached me trae la cuenta actual y todos los registros anteriores🤔
-const updateCart = catchAsync(async (req, res, next) => {
+const updateProductCart = catchAsync(async (req, res, next) => {
     const { newQty, productId } = req.body
     const { sessionUser } = req
 
@@ -119,8 +99,39 @@ const updateCart = catchAsync(async (req, res, next) => {
 
     res.status(200).json({ status: 'success', productInCart })
 })
+
+// /productId remover producto
+const removeProductFromCart = catchAsync(async (req, res, next) => {
+    const { sessionUser } = req
+
+    const cart = await Cart.findOne({
+        required: false,
+        where: { userId: sessionUser.id, status: 'active' },
+    })
+
+    if (!cart) {
+        return next(new AppError('Please get a shopping cart', 404))
+    }
+
+    const removeProduct = ProductInCart.findOne({
+        where: { status: 'active ', cartId: cart.id },
+        include: [{ model: Product }],
+    })
+
+    if (!removeProduct) {
+        return next(new AppError('Product is not in cart', 404))
+    } else {
+        await cart.update({
+            status: 'removed',
+        })
+    }
+
+    res.status(200).json({ status: 'success', cart })
+})
+
+// /purchase  hacer la compra de todos los productos en el carrito
 //envio el correo pero sale vacio por que no le he puesto html pug🤦‍♀️ y las variables tienen que traer el total y los articulos
-const purchase = catchAsync(async (req, res, next) => {
+const purchaseCart = catchAsync(async (req, res, next) => {
     const { sessionUser } = req
 
     const cart = await Cart.findOne({
@@ -165,43 +176,54 @@ const purchase = catchAsync(async (req, res, next) => {
     })
 
     //await new Email(sessionUser.email).sendNewPost(cart)
-
+    // falta enviar un correo al usuario con la lista de los productos que compro
     res.status(200).json({ status: 'success', cart, newOrder })
 })
 
-const removeProduct = catchAsync(async (req, res, next) => {
+
+/* // GET   /orders/:id obtener detalles de una sola orden dado un ID
+const getUserOrdersbyId = catchAsync(async (req, res, next) => {
     const { sessionUser } = req
 
     const cart = await Cart.findOne({
         required: false,
-        where: { userId: sessionUser.id, status: 'active' },
+        where: { userId: sessionUser.id, status: 'purchased' },
+        include: [
+            {
+                model: ProductInCart,
+                include: [{ model: Product }],
+            },
+        ],
     })
-
-    if (!cart) {
-        return next(new AppError('Please get a shopping cart', 404))
-    }
-
-    const removeProduct = ProductInCart.findOne({
-        where: { status: 'active ', cartId: cart.id },
-        include: [{ model: Product }],
-    })
-
-    if (!removeProduct) {
-        return next(new AppError('Product is not in cart', 404))
-    } else {
-        await cart.update({
-            status: 'removed',
-        })
-    }
 
     res.status(200).json({ status: 'success', cart })
 })
 
+// /orders  obtener todas las compras hechas por el usuario
+const getUserAllOrders = catchAsync(async (req, res, next) => {
+    const cart = await Cart.findAll({
+        required: false,
+        where: { status: 'purchased' },
+        include: [
+            {
+                model: ProductInCart,
+                include: [{ model: Product }],
+            },
+        ],
+    })
+
+    res.status(200).json({ status: 'success', cart })
+})
+
+
+*/
+
+
 module.exports = {
-    getAllCart,
-    addProduct,
-    updateCart,
-    purchase,
-    removeProduct,
-    getCart,
+    /*getUserAllOrders,*/
+    addProductCart,
+    updateProductCart,
+    purchaseCart,
+    removeProductFromCart,
+    /*getUserOrdersbyId,*/
 }
