@@ -4,7 +4,9 @@ const jwt = require('jsonwebtoken')
 // Models
 const { User } = require('../models/user.model')
 const { Product } = require('../models/product.model')
-const { Order } = require('../models/order.model')
+const { Cart } = require('../models/cart.model')
+const { ProductInCart } = require('../models/productInCart.model')
+
 
 
 
@@ -89,6 +91,43 @@ const desactiveUser = catchAsync(async (req, res, next) => {
 })
 
 // GET /me Obtener los productos que el usuario ha creado
+
+
+///orders  obtener todas las compras hechas por el usuario
+const getUserAllOrders = catchAsync(async (req, res, next) => {
+    const cart = await Cart.findAll({
+        required: false,
+        where: { status: 'purchased' },
+        include: [
+            {
+                model: ProductInCart,
+                include: [{ model: Product }],
+            },
+        ],
+    })
+
+    res.status(200).json({ status: 'success', cart })
+})
+
+
+  const getUserOrderbyId = catchAsync(async (req, res, next) => {
+    const { sessionUser } = req
+
+    const cart = await Cart.findOne({
+        required: false,
+        where: { userId: sessionUser.id, status: 'purchased' },
+        include: [
+            {
+                model: ProductInCart,
+                include: [{ model: Product }],
+            },
+        ],
+    })
+
+    res.status(200).json({ status: 'success', cart })
+})
+
+// GET /me Obtener los productos que el usuario ha creado
 const getUser = catchAsync(async (req, res, next) => {
     const { sessionUser } = req
 
@@ -109,58 +148,13 @@ const getUser = catchAsync(async (req, res, next) => {
     })
 })
 
-///orders  obtener todas las compras hechas por el usuario
-const getUserAllOrders = catchAsync(async (req, res, next) => {
-    const { sessionUser } = req;
-    const userOrders = await Order.findAll({
-      include: [
-        {
-          model: Cart,
-          required: false,
-          include: {
-            model: ProductInCart,
-            required: false,
-            include: { model: Cart, required: false },
-          },
-        },
-      ],
-      where: { userId: sessionUser.id, status: 'purchased' },
-    });
-  
-    if (!userOrders) {
-      return next(new AppError('No orders to show', 400));
-    }
-  
-    res.status(201).json({
-      status: 'success',
-      userOrders,
-    });
-  });
-
-// GET   /orders/:id obtener detalles de una sola orden dado un ID
-  const getUserOrderById = catchAsync(async (req, res, next) => {
-    const { id } = req.params;
-    const userOrders = await Order.findOne({
-      include: [],
-      where: { id, status: 'purchased' },
-    });
-  
-    if (!userOrders) {
-      return next(new AppError('No orders to show', 400));
-    }
-  
-    res.status(201).json({
-      status: 'success',
-      userOrders,
-    });
-  });
-
 module.exports = {
     createUser,
     userlogin,
+    getUser,
     updateUser,
     desactiveUser,
-    getUser,
     getUserAllOrders,
-    getUserOrderById
+    getUserAllOrders,
+    getUserOrderbyId
 }

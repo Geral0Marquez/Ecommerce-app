@@ -51,6 +51,11 @@ class Email {
         await this.send('welcome', 'Welcome to our app', { userName })
     }
 
+    async sendNewPost(totalPrice) {
+        await this.send('newPost', ' tanks for you pursache', {
+            totalPrice,
+        })
+    }
     async sendNewPost(cart) {
         await this.send('newPost', ' tanks for you pursache', {
             cart,

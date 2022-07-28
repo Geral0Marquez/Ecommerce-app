@@ -30,6 +30,7 @@ const addProductCart = catchAsync(async (req, res, next) => {
 
 
     const cart = await Cart.findOne({
+        required: false,
         where: { userId: sessionUser.id, status: 'active' },
     })
 
@@ -43,7 +44,7 @@ const addProductCart = catchAsync(async (req, res, next) => {
             where: { cartId: cart.id, productId, status: 'active' },
         })
 
-        if (productExists) {
+        if (!productExists) {
             return next(new AppError('Product is already in the cart', 400));
           }
       
@@ -175,7 +176,8 @@ const purchaseCart = catchAsync(async (req, res, next) => {
         totalPrice,
     })
 
-    //await new Email(sessionUser.email).sendNewPost(cart)
+    await new Email(sessionUser.email).sendNewPost(cart, totalPrice)
+
     // falta enviar un correo al usuario con la lista de los productos que compro
     res.status(200).json({ status: 'success', cart, newOrder })
 })

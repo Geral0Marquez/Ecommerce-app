@@ -8,7 +8,7 @@ const {
     desactiveUser,
     getUser,
     getUserAllOrders,
-    getUserOrderById
+    getUserOrderbyId 
 } = require('../controllers/user.controller')
 
 //Middlewares
@@ -21,6 +21,7 @@ protectToken,userExist,
 } = require('../middlewares/user.middleware')
 const { orderExists } = require('../middlewares/order.middleware')
 
+
 //Routers
 const router = express.Router()
 
@@ -29,7 +30,7 @@ router.post('/login', userlogin)
 router.patch('/:id', protectToken, userExist, updateUser)
 router.delete('/:id', protectToken, desactiveUser)
 router.get('/me', protectToken, getUser)
-router.get('/orders', getUserAllOrders) 
-router.get('/orders/:id', orderExists,getUserOrderById)
+router.get('/orders', protectToken,getUserAllOrders) 
+router.get('/orders/:id',protectToken, orderExists, getUserOrderbyId )
 
 module.exports = { UserRouter: router }
