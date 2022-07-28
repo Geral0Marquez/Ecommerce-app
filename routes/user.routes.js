@@ -25,7 +25,7 @@ const { orderExists } = require('../middlewares/order.middleware')
 //Routers
 const router = express.Router()
 
-router.post('/', createUser, createUserValidations, checkValidations)
+router.post('/',  createUserValidations, checkValidations,createUser)
 router.post('/login', userlogin)
 router.patch('/:id', protectToken, userExist, updateUser)
 router.delete('/:id', protectToken, desactiveUser)

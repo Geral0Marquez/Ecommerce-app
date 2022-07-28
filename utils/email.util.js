@@ -51,16 +51,14 @@ class Email {
         await this.send('welcome', 'Welcome to our app', { userName })
     }
 
-    async sendNewPost(totalPrice) {
-        await this.send('newPost', ' tanks for you pursache', {
-            totalPrice,
-        })
-    }
-    async sendNewPost(cart) {
-        await this.send('newPost', ' tanks for you pursache', {
-            cart,
-        })
-    }
+    async sendNewPost(totalPrice, cart, newOrder) {
+        await this.send('newPost', 'Thanks for shopping with us', {
+          totalPrice,
+          cart,
+          newOrder,
+         
+        });
+      }
 }
 
 module.exports = { Email }

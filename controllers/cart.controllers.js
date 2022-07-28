@@ -176,7 +176,13 @@ const purchaseCart = catchAsync(async (req, res, next) => {
         totalPrice,
     })
 
-    await new Email(sessionUser.email).sendNewPost(cart, totalPrice)
+    await new Email(sessionUser.email).sendNewPost
+    (
+    totalPrice,
+    cart,
+    newOrder,
+    
+    )
 
     // falta enviar un correo al usuario con la lista de los productos que compro
     res.status(200).json({ status: 'success', cart, newOrder })
