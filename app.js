@@ -35,7 +35,7 @@ else app.use(morgan('combined'))
 
 //app.use('/', viewsRouter)
 app.use('/api/v1/users', UserRouter)
-app.use('/api/v1/carts', CartRouter)
+app.use('/api/v1/cart', CartRouter)
 app.use('/api/v1/products', ProductRouter)
 app.all('*', (req, res, next) => {
     next(
